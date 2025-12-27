@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NOUN Biometric Exam Guard</title>
+    <style>
+        body { background-color: #000; color: #0f0; font-family: 'Courier New', monospace; text-align: center; }
+        .container { margin-top: 50px; }
+        .scanner-box { border: 2px solid #0f0; width: 300px; margin: 0 auto; padding: 20px; box-shadow: 0 0 20px #0f0; background-color: #001a00; }
+        input { background: black; color: white; border: 1px solid #0f0; padding: 10px; text-align: center; }
+        button { background: #0f0; color: black; padding: 10px 20px; font-weight: bold; cursor: pointer; border: none; }
+        button:hover { background: white; }
+        .profile-card { border: 2px solid white; background: #111; color: white; width: 300px; margin: 20px auto; padding: 20px; display: none; }
+        .profile-card img { width: 150px; height: 150px; border-radius: 50%; border: 3px solid #0f0; }
+        .error { color: red; font-size: 24px; font-weight: bold; animation: blink 0.5s infinite; }
+        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0;} 100% {opacity: 1;} }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 NOUN EXAM GUARD</h1>
+        <p>Biometric Verification System</p>
+        <div class="scanner-box">
+            <p>👇 PLACE FINGER ON SENSOR</p>
+            <form method="POST">
+                <input type="text" name="fingerprint_id" placeholder="Scanning..." required autofocus>
+                <br><br>
+                <button type="submit">VERIFY IDENTITY</button>
+            </form>
+        </div>
+        {% if error %} <br><div class="error">{{ error }}</div> {% endif %}
+        {% if student %}
+        <div class="profile-card" style="display: block;">
+            <h2 style="color: #0f0;">✅ ACCESS GRANTED</h2>
+            <img src="{{ url_for('static', filename=student['image']) }}" alt="Student Photo">
+            <h3>{{ student['full_name'] }}</h3>
+            <p><strong>Matric No:</strong> {{ student['matric_no'] }}</p>
+            <p><strong>Dept:</strong> {{ student['department'] }}</p>
+            <p><strong>Level:</strong> {{ student['level'] }}</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
