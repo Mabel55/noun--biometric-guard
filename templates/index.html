@@ -2,35 +2,85 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NOUN Biometric Exam Guard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>NOUN Biometric Exam Guard</title>
     <style>
-        body { background-color: #000; color: #0f0; font-family: 'Courier New', monospace; text-align: center; }
-        .container { margin-top: 50px; }
-        .scanner-box { border: 2px solid #0f0; width: 300px; margin: 0 auto; padding: 20px; box-shadow: 0 0 20px #0f0; background-color: #001a00; }
-        input { background: black; color: white; border: 1px solid #0f0; padding: 10px; text-align: center; }
-        button { background: #0f0; color: black; padding: 10px 20px; font-weight: bold; cursor: pointer; border: none; }
-        button:hover { background: white; }
-        .profile-card { border: 2px solid white; background: #111; color: white; width: 300px; margin: 20px auto; padding: 20px; display: none; }
-        .profile-card img { width: 150px; height: 150px; border-radius: 50%; border: 3px solid #0f0; }
-        .error { color: red; font-size: 24px; font-weight: bold; animation: blink 0.5s infinite; }
+        /* Matrix / Hacker Theme */
+        body { background-color: #000; color: #0f0; font-family: 'Courier New', monospace; text-align: center; margin: 0; padding: 10px; }
+        .container { margin-top: 30px; }
+        
+        /* The Scanner Box */
+        .scanner-box { 
+            border: 2px solid #0f0; 
+            width: 80%; 
+            max-width: 300px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            box-shadow: 0 0 20px #0f0; 
+            background-color: #001a00;
+            border-radius: 10px;
+        }
+
+        /* The Input Field (Visible so you can type 102) */
+        input { 
+            background: black; color: white; border: 1px solid #0f0; 
+            padding: 10px; text-align: center; width: 80%;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        /* THE FAKE SENSOR BUTTON */
+        .sensor-btn {
+            width: 80px; height: 100px;
+            background: repeating-linear-gradient(
+                0deg,
+                #003300,
+                #003300 2px,
+                #0f0 3px
+            );
+            border: 2px solid #0f0;
+            border-radius: 40px; /* Oval shape like a finger */
+            margin: 20px auto;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: 0.2s;
+        }
+        .sensor-btn:active {
+            opacity: 1;
+            box-shadow: 0 0 30px #0f0;
+            transform: scale(0.95);
+        }
+
+        .submit-btn { background: #0f0; color: black; padding: 15px 30px; font-weight: bold; cursor: pointer; border: none; font-size: 16px; margin-top: 10px; border-radius: 5px; display: none; }
+
+        .profile-card { border: 2px solid white; background: #111; color: white; width: 90%; max-width: 300px; margin: 20px auto; padding: 20px; }
+        .profile-card img { width: 150px; height: 150px; border-radius: 50%; border: 3px solid #0f0; object-fit: cover; }
+        
+        .error { color: red; font-size: 18px; font-weight: bold; animation: blink 0.5s infinite; }
         @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0;} 100% {opacity: 1;} }
     </style>
 </head>
 <body>
+
     <div class="container">
         <h1>🎓 NOUN EXAM GUARD</h1>
-        <p>Biometric Verification System</p>
+        <p>Mobile Biometric Unit</p>
+
         <div class="scanner-box">
-            <p>👇 PLACE FINGER ON SENSOR</p>
-            <form method="POST">
-                <input type="text" name="fingerprint_id" placeholder="Scanning..." required autofocus>
-                <br><br>
-                <button type="submit">VERIFY IDENTITY</button>
+            <p>👇 PLACE FINGER BELOW</p>
+            
+            <div class="sensor-btn" onclick="simulateScan()"></div>
+
+            <form id="scanForm" method="POST">
+                <input type="text" id="fingerprint_id" name="fingerprint_id" placeholder="Enter ID (e.g. 555)">
+                <br>
+                <button class="submit-btn" type="submit">VERIFY IDENTITY</button>
             </form>
         </div>
+
         {% if error %} <br><div class="error">{{ error }}</div> {% endif %}
+
         {% if student %}
-        <div class="profile-card" style="display: block;">
+        <div class="profile-card">
             <h2 style="color: #0f0;">✅ ACCESS GRANTED</h2>
             <img src="{{ url_for('static', filename=student['image']) }}" alt="Student Photo">
             <h3>{{ student['full_name'] }}</h3>
@@ -40,5 +90,30 @@
         </div>
         {% endif %}
     </div>
+
+    <script>
+        function simulateScan() {
+            // 1. VIBRATE THE PHONE (200 milliseconds)
+            // Works on Android phones
+            if (navigator.vibrate) {
+                navigator.vibrate(200); 
+            }
+
+            // 2. CHECK: Did the user type a number manually?
+            var inputField = document.getElementById('fingerprint_id');
+            
+            // If the box is EMPTY, we assume it's the Valid Student (555)
+            // If you typed "102", we leave it alone!
+            if (inputField.value === "") {
+                inputField.value = "555";
+            }
+            
+            // 3. Submit the form automatically after a short delay
+            setTimeout(() => {
+                document.getElementById('scanForm').submit();
+            }, 500);
+        }
+    </script>
+
 </body>
 </html>
