@@ -1,0 +1,43 @@
+import cv2
+import time
+
+print("--------------------------------------------------")
+print("📷 DIAGNOSTIC MODE: TESTING CAMERA ONLY")
+print("--------------------------------------------------")
+
+# 1. Try to force the camera open using DirectShow (Windows standard)
+print("Attempting to open camera index 0...")
+cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+
+# 2. Check if it opened
+if not cap.isOpened():
+    print("❌ ERROR: Camera 0 failed to open.")
+    print("   -> Trying Camera 1 (External/Virtual)...")
+    cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+    if not cap.isOpened():
+        print("❌ CRITICAL FAILURE: No cameras found on this computer.")
+        exit()
+
+# 3. Read a frame
+print("✅ SUCCESS: Camera connection established!")
+print("👀 Reading camera... (Look at your lens!)")
+
+# Allow camera to adjust to light
+for i in range(15):
+    ret, frame = cap.read()
+    time.sleep(0.1)
+
+if ret:
+    print("📸 SNAP! Picture taken.")
+    # Save the picture so we can prove it works
+    cv2.imwrite("proof.jpg", frame)
+    print("💾 Saved image as 'proof.jpg' next to this file.")
+    print("--------------------------------------------------")
+    print("👇 ACTION REQUIRED:")
+    print("   1. Look at the file list on the left.")
+    print("   2. Open 'proof.jpg'.")
+    print("   3. Is it your face? Or is it black?")
+else:
+    print("⚠️ Camera opened, but sent a blank signal.")
+
+cap.release()

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Exam Guard</title>
+    <style>
+        body { font-family: sans-serif; background: #2c3e50; color: white; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        
+        /* Links */
+        .top-links { margin-bottom: 20px; }
+        .top-links a { color: #3498db; text-decoration: none; margin-right: 15px; font-weight: bold; }
+        .logout { color: #e74c3c !important; float: right; }
+
+        /* Boxes */
+        .admin-box { background: white; color: black; padding: 20px; border-radius: 10px; margin-bottom: 30px; }
+        input, select { padding: 10px; margin: 5px; width: 45%; }
+        button { padding: 10px 20px; background: #27ae60; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background: #219150; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; background: white; color: black; border-radius: 10px; overflow: hidden; margin-bottom: 30px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #34495e; color: white; }
+        img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        
+        .status-auth { color: green; font-weight: bold; }
+        .status-denied { color: red; font-weight: bold; }
+        .delete-btn { background: #c0392b; padding: 5px 10px; border-radius: 5px; text-decoration: none; color: white; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="top-links">
+            <a href="/">&larr; Back to App</a>
+            <a href="/logout" class="logout">Logout 🔒</a>
+        </div>
+        
+        <h1>🛠️ Admin Dashboard</h1>
+        
+        <div class="admin-box">
+            <h2>➕ Register New Student</h2>
+            <form action="/add_student" method="POST" enctype="multipart/form-data">
+                <input type="text" name="id" placeholder="Student ID" required>
+                <input type="text" name="name" placeholder="Full Name" required>
+                <input type="text" name="dept" placeholder="Department" required>
+                <select name="level">
+                    <option value="100 Level">100 Level</option>
+                    <option value="200 Level">200 Level</option>
+                    <option value="300 Level">300 Level</option>
+                    <option value="400 Level">400 Level</option>
+                </select>
+                <br><br>
+                <label>Upload Photo:</label>
+                <input type="file" name="photo" accept="image/*" required>
+                <br><br>
+                <button type="submit">Save Student</button>
+            </form>
+        </div>
+
+        <h2>📋 Registered Students</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Photo</th>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Level</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td><img src="{{ url_for('static', filename=student.image) }}"></td>
+                    <td>{{ student.id }}</td>
+                    <td>{{ student.name }}</td>
+                    <td>{{ student.dept }}</td>
+                    <td>{{ student.level }}</td>
+                    <td>
+                        <a href="/delete/{{ student.id }}" class="delete-btn" onclick="return confirm('Are you sure?')">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>📝 Recent Activity Logs</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Student Name / ID</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.timestamp }}</td>
+                    <td>{{ log.student_id }}</td>
+                    <td>
+                        {% if "AUTHORIZED" in log.status %}
+                            <span class="status-auth">✅ {{ log.status }}</span>
+                        {% else %}
+                            <span class="status-denied">❌ {{ log.status }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="text-align:center;">No activity yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+
+</body>
+</html>

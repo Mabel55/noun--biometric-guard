@@ -1,2 +1,7 @@
-Flask
-gunicorn
+flask
+flask_sqlalchemy
+opencv-python
+face_recognition
+cmake
+dlib
+numpy

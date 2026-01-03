@@ -1,67 +1,37 @@
-# 🎓 NOUN Biometric Exam Guard
+#  Exam Guard - Biometric Exam Verification System
 
-**Exam Guard** is a security verification system designed for the **National Open University of Nigeria (NOUN)** to prevent exam malpractice and impersonation. 
+**Exam Guard** is a full-stack security application designed to prevent exam malpractice using facial recognition technology. It verifies student identities in real-time by comparing live webcam footage with a secure database of registered student profiles.
 
-It uses a **Biometric Simulation** to verify student identities in real-time before they enter the exam hall.
+##  Key Features
+* **Facial Recognition:** Uses the `face_recognition` library to verify identity with high accuracy.
+* **Live Webcam Integration:** Captures real-time video for instant verification.
+* **Secure Admin Dashboard:** Password-protected panel to manage student records.
+* **Student Database:** Stores profiles (Name, ID, Department, Level, Photo) using SQLite.
+* **Activity Logging:** Tracks and saves a history of all authorized and denied attempts.
+* **Modern UI:** Responsive, user-friendly interface with visual feedback (Green for Verified, Red for Denied).
 
-## 🚀 Key Features
+## Tech Stack
+* **Backend:** Python, Flask
+* **Database:** SQLAlchemy (SQLite)
+* **AI/ML:** OpenCV, Face Recognition API
+* **Frontend:** HTML5, CSS3
 
-### 🧬 1. Biometric Verification Simulation
-* Simulates a fingerprint scanner interface.
-* Instantly retrieves student details from a secure database based on their unique biometric ID.
-
-### 🚨 2. Impersonation Detection
-* Automatically flags unregistered or fake IDs.
-* Displays a **"RED ALERT"** warning if a non-student tries to gain access.
-
-### 📱 3. Mobile "Haptic" Scanner
-* Optimized for mobile phones.
-* Uses **Haptic Feedback (Vibration)** API to make the phone physically vibrate when the user presses the "Scan" button, mimicking a real hardware scanner.
-
-### 📂 4. Digital Student Database
-* Stores and retrieves student records including:
-    * **Full Name & Photo**
-    * **Matriculation Number**
-    * **Department & Level**
-
----
-
-## 🛠️ Tech Stack
-* **Backend:** Python (Flask)
-* **Frontend:** HTML5, CSS3 (Matrix/Hacker Theme), JavaScript
-* **Database:** CSV (Lightweight Flat-File Database)
-* **Hardware Integration:** JavaScript Vibration API
-
----
-
-## 📸 How It Works
-1.  **The Checkpoint:** The invigilator or student opens the app on a mobile device or laptop.
-2.  **The Scan:** The user places their finger on the green scanner pad.
-3.  **The Process:** The phone vibrates to confirm the scan, and the ID is sent to the Python backend.
-4.  **The Result:**
-    * **✅ ACCESS GRANTED:** Shows the student's face and matric number.
-    * **❌ ACCESS DENIED:** Triggers an impersonator alert.
-
----
-
-## 💻 Installation
-1.  Clone the repository:
+## ⚙️ How to Run
+1.  **Install Dependencies:**
     ```bash
-    git clone [https://github.com/Mabel55/noun-biometric-guard.git](https://github.com/Mabel55/noun-biometric-guard.git)
+    pip install -r requirements.txt
     ```
-2.  Create a virtual environment:
-    ```bash
-    python -m venv venv
-    venv\Scripts\activate
-    ```
-3.  Install Flask:
-    ```bash
-    pip install flask
-    ```
-4.  Run the application:
+2.  **Run the Application:**
     ```bash
     python app.py
     ```
+3.  **Open in Browser:**
+    Go to `http://127.0.0.1:5000`
+
+## 👤 Admin Access
+* **URL:** `/admin`
+* **Default Username:** `admin`
+* **Default Password:** `mabel123`
 
 ---
-*Built by Arua Mabel Chinasa. Solving real-world problems with Code.*
+*Created by Mabel (Computer Science, 400 Level)*
