@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Student</title>
+    <style>
+        body { font-family: sans-serif; background: #ecf0f1; padding: 40px; text-align: center; }
+        .box { background: white; padding: 40px; border-radius: 8px; display: inline-block; width: 300px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; }
+        button { width: 100%; padding: 10px; background: #f39c12; color: white; border: none; cursor: pointer; }
+        .cancel { color: #7f8c8d; text-decoration: none; display: block; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>✏️ Update Student</h2>
+        <form action="/update_student_save" method="post">
+            <input type="hidden" name="original_id" value="{{ student[0] }}">
+            
+            <label>Student ID:</label>
+            <input type="text" name="student_id" value="{{ student[0] }}" required>
+            
+            <label>Full Name:</label>
+            <input type="text" name="name" value="{{ student[1] }}" required>
+            
+            <button type="submit">Save Changes</button>
+        </form>
+        <a href="/dashboard" class="cancel">Cancel</a>
+    </div>
+</body>
+</html>

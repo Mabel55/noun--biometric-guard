@@ -1,195 +1,265 @@
+from flask import Flask, render_template, Response, request, redirect, url_for, session, flash
 import cv2
 import face_recognition
-import os
-import datetime
-from flask import Flask, render_template, request, redirect, url_for, session
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.utils import secure_filename
-
+import mysql.connector
+import pickle
+import numpy as np
+from scipy.spatial import distance as dist
 app = Flask(__name__)
+app.secret_key = "super_secret_key" 
 
 # --- CONFIGURATION ---
-app.secret_key = "ExamGuardSecretKey"
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///students.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER'] = 'static'
-db = SQLAlchemy(app)
+db_config = {
+    'host': "localhost",
+    'user': "root",
+    'password': "1234",  
+    'database': "exam_guard"
+}
 
-# --- DATABASE MODELS ---
-class Student(db.Model):
-    id = db.Column(db.String(20), primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    dept = db.Column(db.String(100), nullable=False)
-    level = db.Column(db.String(50), nullable=False)
-    image = db.Column(db.String(50), nullable=False)
+ADMIN_USER = "admin"
+ADMIN_PASS = "12345"
+current_user_name = "Unknown"
 
-class AccessLog(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.String(50))
-    student_id = db.Column(db.String(50))
-    status = db.Column(db.String(50))
+def get_db():
+    try: return mysql.connector.connect(**db_config)
+    except: return None
 
-# --- LOGGING FUNCTION ---
-def log_access(student_id, status):
-    """Saves the event to the SQL Database."""
+def get_all_students():
     try:
-        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        new_log = AccessLog(timestamp=now, student_id=student_id, status=status)
-        db.session.add(new_log)
-        db.session.commit()
-        print(f"📝 Log saved: {student_id} - {status}")
-    except Exception as e:
-        print(f"⚠️ Error saving log: {e}")
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT student_id, name FROM students")
+        data = cursor.fetchall()
+        conn.close()
+        return data
+    except: return []
 
-# --- IMPROVED FACE VERIFICATION ---
-def verify_face(student_id):
-    photo_filename = os.path.join('static', f"{student_id}.jpg")
+def get_ear(eye):
+    # Calculate the vertical distances (between eyelids)
+    A = dist.euclidean(eye[1], eye[5])
+    B = dist.euclidean(eye[2], eye[4])
+
+    # Calculate the horizontal distance (width of eye)
+    C = dist.euclidean(eye[0], eye[3])
+
+    # Calculate the Eye Aspect Ratio (EAR)
+    ear = (A + B) / (2.0 * C)
+    return ear
     
-    # 1. Log if Photo Missing
-    if not os.path.exists(photo_filename): 
-        log_access(student_id, "FAILED - No Photo on File")
-        return False
+    
 
-    try:
-        student_image = face_recognition.load_image_file(photo_filename)
-        student_encodings = face_recognition.face_encodings(student_image)
-        if len(student_encodings) == 0: 
-            log_access(student_id, "FAILED - Bad ID Photo")
-            return False
-        known_face_encoding = student_encodings[0]
-    except:
-        return False
-
-    # LIVE CAMERA
-    print("📸 Opening Camera...")
+def gen_frames(target_encoding):
     camera = cv2.VideoCapture(0)
-    if not camera.isOpened(): return False
+    blink_detected = False # Flag to track if user has blinked
     
-    found_face_frame = None
     while True:
-        ret, frame = camera.read()
-        if not ret: break
-        cv2.putText(frame, "Press SPACE to Verify", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-        cv2.imshow("Exam Guard Verification", frame)
-        key = cv2.waitKey(1) & 0xFF
-        if key == 32: 
-            found_face_frame = frame
+        success, frame = camera.read()
+        if not success:
             break
-        elif key == ord('q'):
-            camera.release()
-            cv2.destroyAllWindows()
-            log_access(student_id, "CANCELLED by User")
-            return False
             
-    camera.release()
-    cv2.destroyAllWindows()
-    
-    # 2. Log if No Face in Camera
-    if found_face_frame is None: 
-        log_access(student_id, "CANCELLED - No Capture")
-        return False
+        # Resize for speed
+        small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
+        rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
 
-    rgb_frame = cv2.cvtColor(found_face_frame, cv2.COLOR_BGR2RGB)
-    live_face_encodings = face_recognition.face_encodings(rgb_frame)
-    
-    if len(live_face_encodings) == 0: 
-        log_access(student_id, "DENIED - No Face Detected")
-        return False
-
-    match = face_recognition.compare_faces([known_face_encoding], live_face_encodings[0])
-    
-    # Get Student Name
-    student = Student.query.get(student_id)
-    student_name = student.name if student else student_id
-
-    if match[0]:
-        log_access(student_name, "AUTHORIZED")
-        return True
-    else:
-        log_access(student_name, "DENIED - Face Mismatch")
-        return False
-
-# --- ROUTES ---
-
-@app.route('/', methods=['GET', 'POST'])
-def home():
-    student_info = None
-    error_message = None
-    if request.method == 'POST':
-        search_id = request.form.get('id_number')
-        found_student = Student.query.get(search_id)
+        # 1. Find Face Locations & Landmarks
+        face_locations = face_recognition.face_locations(rgb_small_frame)
         
-        if found_student:
-            if verify_face(search_id):
-                student_info = found_student
-            else:
-                error_message = "❌ ACCESS DENIED: Face did not match."
-        else:
-            # 3. Log if ID doesn't exist
-            log_access(search_id, "DENIED - Invalid ID")
-            error_message = "⚠️ ID Not Found in Database."
+        # Only process if a face is found
+        if face_locations:
+            # We assume the main face is the user
+            face_landmarks_list = face_recognition.face_landmarks(rgb_small_frame, face_locations)
             
-    return render_template('index.html', student=student_info, error=error_message)
+            # Check for Blink (Liveness)
+            if not blink_detected:
+                for face_landmark in face_landmarks_list:
+                    left_eye = face_landmark['left_eye']
+                    right_eye = face_landmark['right_eye']
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    error = None
-    if request.method == 'POST':
-        if request.form['username'] == "admin" and request.form['password'] == "mabel123":
-            session['logged_in'] = True
-            return redirect(url_for('admin_panel'))
+                    # Calculate EAR for both eyes
+                    leftEAR = get_ear(left_eye)
+                    rightEAR = get_ear(right_eye)
+                    
+                    # Average the two eyes
+                    ear = (leftEAR + rightEAR) / 2.0
+
+                    # IF EAR is below 0.2, the eyes are closed (Blink!)
+                    if ear < 0.2:
+                        blink_detected = True
+                
+                # Draw "Please Blink" message
+                cv2.putText(frame, "PLEASE BLINK TO VERIFY", (50, 50), 
+                           cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+
+            else:
+                # 2. Blink Confirmed! Now we check identity
+                face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
+                
+                match_found = False
+                for face_encoding in face_encodings:
+                    matches = face_recognition.compare_faces([target_encoding], face_encoding)
+                    if True in matches:
+                        match_found = True
+                        break
+                
+                if match_found:
+                    # Draw Green Box & Success
+                    top, right, bottom, left = face_locations[0]
+                    # Scale back up (since we resized by 0.25)
+                    top *= 4
+                    right *= 4
+                    bottom *= 4
+                    left *= 4
+                    
+                    cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
+                    cv2.putText(frame, "LIVENESS CONFIRMED: Verified", (50, 50), 
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+                    
+                    # OPTIONAL: You can auto-redirect here if you want
+                    # return redirect(url_for('exam')) 
+                else:
+                    cv2.putText(frame, "Face Not Recognized", (50, 50), 
+                               cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+
         else:
-            error = "❌ Invalid Credentials"
-    return render_template('login.html', error=error)
+            # No face detected at all
+            blink_detected = False # Reset if they look away
 
-@app.route('/logout')
-def logout():
-    session.pop('logged_in', None)
-    return redirect(url_for('login'))
+        ret, buffer = cv2.imencode('.jpg', frame)
+        frame = buffer.tobytes()
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+# --- ROUTES ---
+@app.route('/')
+def home(): return render_template('login.html')
+
+@app.route('/verify', methods=['POST'])
+def verify():
+    global current_user_name
+    student_id = request.form['student_id']
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT name, face_encoding FROM students WHERE student_id=%s", (student_id,))
+    res = cursor.fetchone()
+    conn.close()
+    if res:
+        current_user_name = res[0]
+        app.config['TARGET'] = pickle.loads(res[1])
+        return render_template('verify.html', name=res[0])
+    return "<h3>❌ ID Not Found</h3>"
+
+@app.route('/video_feed')
+def video_feed(): return Response(gen_frames(app.config.get('TARGET')), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/exam')
+def exam(): return render_template('exam.html', name=current_user_name)
 
 @app.route('/admin')
-def admin_panel():
-    if not session.get('logged_in'): return redirect(url_for('login'))
-    
-    all_students = Student.query.all()
-    # Fetch the logs (Show last 15)
-    all_logs = AccessLog.query.order_by(AccessLog.id.desc()).limit(15).all()
-    
-    return render_template('admin.html', students=all_students, logs=all_logs)
+def admin(): return render_template('admin_login.html')
 
-@app.route('/add_student', methods=['POST'])
-def add_student():
-    if not session.get('logged_in'): return redirect(url_for('login'))
+# FIX 1: Add the comma between 'GET' and 'POST'
+@app.route('/admin_login', methods=['GET', 'POST']) 
+def admin_login():
+    # FIX 2: Remove 'pass' and put the logic INSIDE the if block
+    if request.method == 'POST':
+        # Now this only happens when you click "Login"
+        if request.form.get('username') == 'admin' and request.form.get('password') == '1234':
+            session['admin'] = True
+            return redirect(url_for('dashboard'))
+        else:
+            return "<h3>❌ Wrong Password</h3>"
     
-    id_num = request.form['id']
-    name = request.form['name']
-    dept = request.form['dept']
-    level = request.form['level']
-    
-    if Student.query.get(id_num): return "❌ ID exists!"
-    
-    if 'photo' in request.files:
-        file = request.files['photo']
-        if file.filename != '':
-            filename = f"{id_num}.jpg"
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            new_student = Student(id=id_num, name=name, dept=dept, level=level, image=filename)
-            db.session.add(new_student)
-            db.session.commit()
-            
-    return redirect(url_for('admin_panel'))
+    # This runs if it's a GET request (Showing the form)
+    return render_template('admin_login.html')
 
-@app.route('/delete/<id>')
-def delete_student(id):
-    if not session.get('logged_in'): return redirect(url_for('login'))
-    student = Student.query.get(id)
-    if student:
-        db.session.delete(student)
-        db.session.commit()
-        try: os.remove(os.path.join(app.config['UPLOAD_FOLDER'], student.image))
-        except: pass
-    return redirect(url_for('admin_panel'))
+@app.route('/dashboard')
+def dashboard():
+    # We removed the login check so you can access it easily for now.
+    
+    # IMPORTANT: Ensure this matches the filename in your VS Code folder!
+    # In your screenshot, you named it "my_dashboard.html"
+    return render_template('my_dashboard.html', students=get_all_students())
+    
+@app.route('/delete_student/<string:sid>', methods=['GET'])
+def delete_student(sid):
+    # 1. Open the connection with the name 'conn'
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # 2. Run the Delete
+    cursor.execute("DELETE FROM students WHERE student_id=%s", (sid,))
+    
+    # 3. Check if it worked (Debugging)
+    deleted_count = cursor.rowcount
+    print(f"------------")
+    print(f"ATTEMPTING TO DELETE: {sid}")
+    print(f"ROWS DELETED: {deleted_count}")
+    
+    # 4. SAVE THE CHANGE (Use 'conn' here!)
+    conn.commit() 
+    conn.close()
+
+    # 5. Report back
+    if deleted_count > 0:
+        flash("Student Deleted Successfully!", "success")
+    else:
+        flash("Error: Student ID not found.", "danger")
+
+    return redirect(url_for('dashboard'))
+
+# --- THE FIX: SMART UPLOAD HANDLER ---
+@app.route('/add_new_student', methods=['GET', 'POST'])
+@app.route('/add_student', methods=['GET', 'POST']) 
+def add_new_student():
+    # 1. REMOVED LOGIN CHECK FOR TESTING
+    
+    if request.method == 'POST':
+        print("---DEBUGGING FORM DATA---")
+        print(request.form)
+        print("--------------------------------")
+        student_id = request.form.get('student_id') 
+        name = request.form.get('full_name')
+        if not student_id or not name:
+            return "Error: Please provide both student ID and name", 404
+        
+        # --- THE FIX: FIND ANY FILE ---
+        # We don't care if it's named 'file', 'photo', or 'banana'. 
+        # We just grab the first file we find.
+        file = None
+        if len(request.files) > 0:
+            # Get the first available file key
+            first_key = next(iter(request.files))
+            file = request.files[first_key]
+            print(f"✅ FOUND FILE! The HTML named it: '{first_key}'")
+        else:
+            print("❌ ERROR: Request.files is EMPTY. This means HTML 'enctype' is definitely missing or browser cached.")
+            return "Error: No file found. Please Hard Refresh (Ctrl+Shift+R)."
+
+        if file.filename == '': return "Error: No selected file"
+
+        try:
+            image = face_recognition.load_image_file(file)
+            encodings = face_recognition.face_encodings(image)
+            print("-----------------------------")
+            print(f"FACE FOUND: {len(encodings)}")
+            print("--------------------------------")
+            if len(encodings) > 0:
+                blob = pickle.dumps(encodings[0])
+                conn = get_db()
+                cursor = conn.cursor()
+                cursor.execute("INSERT INTO students (student_id, name, face_encoding) VALUES (%s, %s, %s)", (student_id, name, blob))
+                conn.commit()
+                conn.close()
+                return redirect(url_for('dashboard'))
+            else:
+                return "<h3>❌ No face detected! <a href='/add_new_student'>Try Again</a></h3>"
+        except Exception as e:
+            return f"Error: {e}"
+
+    # Try to load the new file name first, if not found, load the old one
+    try:
+        return render_template('register_student.html')
+    except:
+        return render_template('add_student.html')
 
 if __name__ == '__main__':
-    with app.app_context(): db.create_all()
-    app.run(debug=True)
+    app.run(debug=True,)

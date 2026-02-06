@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verification</title>
+    <style>
+        body { background-color: #222; color: white; text-align: center; font-family: sans-serif; }
+        .video-container { border: 5px solid white; display: inline-block; margin-top: 20px; }
+        .btn { display: inline-block; padding: 15px 30px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; font-size: 18px; margin-top: 20px; }
+        .btn:hover { background-color: #218838; }
+    </style>
+</head>
+<body>
+    <h1>📸 Face Verification</h1>
+    <h3>Identity Found: <span style="color: yellow;">{{ name }}</span></h3>
+    
+    <div class="video-container">
+        <img src="/video_feed" width="640" height="480">
+    </div>
+
+    <br>
+    <p>Once you see the <b style="color: #0f0;">GREEN BOX</b>, click the button below:</p>
+    
+    <a href="/exam" class="btn">✅ I am Verified - Start Exam</a>
+
+</body>
+</html>

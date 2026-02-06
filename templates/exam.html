@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Final Exam</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f4f9; padding: 40px; }
+        .paper { background: white; padding: 40px; border-radius: 10px; max-width: 800px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        .question { margin-bottom: 20px; }
+        .submit-btn { background-color: #007bff; color: white; border: none; padding: 10px 20px; font-size: 16px; cursor: pointer; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="paper">
+        <h1>📝 Final Examination</h1>
+        <p><b>Student:</b> {{ name }}</p>
+        <hr>
+
+        <form>
+            <div class="question">
+                <p><b>1. What is the capital of Nigeria?</b></p>
+                <input type="radio" name="q1" value="Lagos"> Lagos<br>
+                <input type="radio" name="q1" value="Abuja"> Abuja<br>
+                <input type="radio" name="q1" value="Kano"> Kano<br>
+            </div>
+
+            <div class="question">
+                <p><b>2. Which programming language are we using?</b></p>
+                <input type="radio" name="q2" value="Java"> Java<br>
+                <input type="radio" name="q2" value="Python"> Python<br>
+                <input type="radio" name="q2" value="C++"> C++<br>
+            </div>
+
+            <button type="button" class="submit-btn" onclick="alert('Exam Submitted Successfully!')">Submit Exam</button>
+        </form>
+    </div>
+
+</body>
+</html>

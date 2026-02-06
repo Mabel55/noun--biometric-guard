@@ -1,37 +1,58 @@
-#  Exam Guard - Biometric Exam Verification System
+# 🛡️ Biometric Exam Guard
 
-**Exam Guard** is a full-stack security application designed to prevent exam malpractice using facial recognition technology. It verifies student identities in real-time by comparing live webcam footage with a secure database of registered student profiles.
+> **A Secure, AI-Powered Student Verification System for Anti-Impersonation in Examinations.**
 
-##  Key Features
-* **Facial Recognition:** Uses the `face_recognition` library to verify identity with high accuracy.
-* **Live Webcam Integration:** Captures real-time video for instant verification.
-* **Secure Admin Dashboard:** Password-protected panel to manage student records.
-* **Student Database:** Stores profiles (Name, ID, Department, Level, Photo) using SQLite.
-* **Activity Logging:** Tracks and saves a history of all authorized and denied attempts.
-* **Modern UI:** Responsive, user-friendly interface with visual feedback (Green for Verified, Red for Denied).
+![Python](https://img.shields.io/badge/Python-3.11-blue?style=for-the-badge&logo=python)
+![Flask](https://img.shields.io/badge/Flask-Web_Framework-red?style=for-the-badge&logo=flask)
+![MySQL](https://img.shields.io/badge/MySQL-Database-orange?style=for-the-badge&logo=mysql)
+![OpenCV](https://img.shields.io/badge/OpenCV-Computer_Vision-green?style=for-the-badge&logo=opencv)
 
-## Tech Stack
-* **Backend:** Python, Flask
-* **Database:** SQLAlchemy (SQLite)
-* **AI/ML:** OpenCV, Face Recognition API
-* **Frontend:** HTML5, CSS3
+## 📖 Overview
+**Biometric Exam Guard** is a multi-factor authentication system designed to eliminate examination malpractice (specifically impersonation) in educational institutions. 
 
-## ⚙️ How to Run
-1.  **Install Dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    ```
-2.  **Run the Application:**
-    ```bash
-    python app.py
-    ```
-3.  **Open in Browser:**
-    Go to `http://127.0.0.1:5000`
+Unlike traditional ID card checks, this system uses **Facial Recognition** combined with **Liveness Detection (Blink Verification)** to ensure that the student physically present at the computer is the actual registered candidate.
 
-## 👤 Admin Access
-* **URL:** `/admin`
-* **Default Username:** `admin`
-* **Default Password:** `mabel123`
+This project was developed as a Final Year Project for the **Department of Computer Science, National Open University of Nigeria (NOUN)**.
 
 ---
-*Created by Mabel (Computer Science, 400 Level)*
+
+## 🚀 Key Features
+
+### 1. 👤 Student Registration & Encoding
+* Captures student details (Matric No, Name).
+* Uses **dlib** to generate a unique 128-dimensional face encoding.
+* Stores encodings securely as BLOB data in a **MySQL** database.
+
+### 2. 👁️ Liveness Detection (Anti-Spoofing)
+* **Prevents photo attacks:** Users cannot simply hold up a picture of a student.
+* **Eye Aspect Ratio (EAR):** The system calculates the distance between eyelids using `scipy.spatial` and facial landmarks.
+* **Logic:** Access is denied until the user blinks naturally, proving they are a live human.
+
+### 3. 🔐 Real-Time Verification
+* Connects to the webcam using **OpenCV**.
+* Matches live video feed against the database in real-time.
+* **Green Box:** Identity Verified (Access Granted).
+* **Red Warning:** Unknown Face (Access Denied).
+
+### 4. 🎓 Exam Portal Integration
+* Automatically redirects verified students to the secure exam interface.
+* Prevents unauthorized access to question papers.
+
+---
+
+## 🛠️ Technology Stack
+
+* **Backend:** Python (Flask)
+* **Database:** MySQL (XAMPP/WAMP)
+* **Computer Vision:** OpenCV (`cv2`), `face_recognition`, `dlib`
+* **Data Processing:** NumPy, SciPy (for Euclidean distance math)
+* **Frontend:** HTML5, CSS3, Bootstrap 4, JavaScript
+
+---
+
+## ⚙️ Installation & Setup
+
+### 1. Clone the Repository
+```bash
+git clone [https://github.com/your-username/biometric-exam-guard.git](https://github.com/your-username/biometric-exam-guard.git)
+cd biometric-exam-guard
