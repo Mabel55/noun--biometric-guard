@@ -55,3 +55,11 @@ The application uses **computer vision and machine learning** concepts to detect
    pip install -r requirements.txt
 
    python app.py
+   🎯 Use Cases
+Secure authentication systems
+Attendance management systems
+Surveillance and identity verification
+AI-powered access control systems
+👩‍💻 Author
+Mabel Chinasa
+Python Backend & AI Developer
