@@ -56,7 +56,10 @@ The application uses **computer vision and machine learning** concepts to detect
 
    python app.py
 
-   🎯 Use Cases
+
+
+ 🎯 Use Cases
+
 Secure authentication systems
 Attendance management systems
 Surveillance and identity verification
